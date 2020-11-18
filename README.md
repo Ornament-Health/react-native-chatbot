@@ -2,7 +2,7 @@
 
 <a href="https://badge.fury.io/js/react-native-chatbot"><img src="https://badge.fury.io/js/react-native-chatbot.svg" alt="npm version"></a>
 
-[StoryBook](https://github.com/Ornament-Health/react-native-chatbot/docs)
+[StoryBook](https://ornament-health.github.io/react-native-chatbot/)
 
 TypeScripted fork of [react-native-chatbot](https://github.com/LucasBassetti/react-native-chatbot) which a react native chatbot component to create conversation chats. Based on [react-simple-chatbot](https://github.com/LucasBassetti/react-simple-chatbot).
 
