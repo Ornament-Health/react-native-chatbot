@@ -1,28 +1,29 @@
-import React, { Component } from 'react';
-import Option from './Option';
+import React, { Component, ComponentProps } from 'react';
+import OptionComponent from './Option';
 import OptionElement from './OptionElement';
 import OptionText from './OptionText';
 import Options from './Options';
+import { Option } from '../../schemas/schema';
 
 interface Props {
   step: {};
   triggerNextStep: Function;
-  optionStyle: {};
-  optionElementStyle: {};
+  optionStyle: ComponentProps<typeof OptionComponent>['style'];
+  optionElementStyle: ComponentProps<typeof OptionElement>['style'];
 }
 
 export class OptionsStep extends Component<Props> {
-  private onOptionClick = ({ value }) => {
+  private onOptionClick = ({ value }: { value: number }) => {
     this.props.triggerNextStep({ value });
   };
 
-  private renderOption = option => {
+  private renderOption = (option: Option) => {
     const { optionStyle, optionElementStyle } = this.props;
     const { optionBubbleColor, optionFontColor, bubbleColor, fontColor } = this
       .props.step as any;
     const { value, label } = option;
     return (
-      <Option
+      <OptionComponent
         key={value}
         style={optionStyle}
         onPress={() => this.onOptionClick({ value })}
@@ -35,7 +36,7 @@ export class OptionsStep extends Component<Props> {
             {label}
           </OptionText>
         </OptionElement>
-      </Option>
+      </OptionComponent>
     );
   };
 

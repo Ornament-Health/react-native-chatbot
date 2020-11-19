@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, ComponentProps } from 'react';
 import Bubble from './Bubble';
 import Img from './Image';
 import ImageContainer from './ImageContainer';
@@ -11,10 +11,10 @@ interface Props {
   isLast: boolean;
   step: {};
   triggerNextStep: Function;
-  avatarStyle: {};
-  avatarWrapperStyle?: {};
-  bubbleStyle: {};
-  userBubbleStyle: {};
+  avatarStyle: ComponentProps<typeof Img>['style'];
+  avatarWrapperStyle?: ComponentProps<typeof ImageContainer>['style'];
+  bubbleStyle: ComponentProps<typeof Bubble>['style'];
+  userBubbleStyle: ComponentProps<typeof Bubble>['style'];
   hideBotAvatar: boolean;
   hideUserAvatar: boolean;
   previousStep?: {};

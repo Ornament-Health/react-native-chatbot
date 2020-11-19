@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { createRef, Component } from 'react';
 import {
   Dimensions,
@@ -7,15 +6,32 @@ import {
   ScrollView,
   Platform,
   EmitterSubscription,
+  StyleProp,
+  ViewStyle,
+  ImageStyle,
+  TextStyle,
+  TextInputProps,
+  NativeSyntheticEvent,
+  TextInputKeyPressEventData,
 } from 'react-native';
 import Random from './random';
 import { CustomStep, OptionsStep, TextStep } from './steps/steps';
-import schema from './schemas/schema';
 import ChatBotContainer from './ChatBotContainer';
 import InputView from './InputView';
 import Footer from './Footer';
 import Button from './Button';
 import ButtonText from './ButtonText';
+import schema, {
+  ID,
+  RunTimeStep,
+  Step,
+  StepsDictionary,
+  StepsDictionaryPartial,
+  StepUnion,
+  Message,
+  Trigger,
+  Option,
+} from './schemas/schema';
 
 const { height, width } = Dimensions.get('window');
 
@@ -58,20 +74,23 @@ const defaultProps: Partial<Props> = {
   scrollViewProps: {},
 };
 
+type ViewStyleProps = StyleProp<ViewStyle>;
+type ImageStyleProps = StyleProp<ImageStyle>;
+
 interface Props {
-  avatarStyle?: {};
-  avatarWrapperStyle?: {};
+  avatarStyle?: ImageStyleProps;
+  avatarWrapperStyle?: ViewStyleProps;
   botAvatar?: string;
   botBubbleColor?: string;
   botDelay?: number;
   botFontColor?: string;
-  bubbleStyle?: {};
-  optionStyle?: {};
+  bubbleStyle?: ViewStyleProps;
+  optionStyle?: ViewStyleProps;
   optionBubbleColor?: string;
   optionFontColor?: string;
-  optionElementStyle?: {};
-  contentStyle?: {};
-  customStyle?: {};
+  optionElementStyle?: ViewStyleProps;
+  contentStyle?: ViewStyleProps;
+  customStyle?: ViewStyleProps;
   customDelay?: number;
   customLoadingColor?: string;
   className?: string;
@@ -79,33 +98,29 @@ interface Props {
   headerComponent?: Component; // PropTypes.element,
   hideBotAvatar?: boolean;
   hideUserAvatar?: boolean;
-  footerStyle?: {};
-  inputAttributes?: {}; // PropTypes.objectOf(PropTypes.any),
-  inputStyle?: {};
+  footerStyle?: ViewStyleProps;
+  inputAttributes?: TextInputProps;
+  inputStyle?: StyleProp<TextStyle>;
   keyboardVerticalOffset?: number;
   placeholder?: string;
-  steps: any[];
-  style?: {};
-  submitButtonStyle?: {};
-  submitButtonContent?: string | Component;
-  // PropTypes.oneOfType([
-  //   PropTypes.string,
-  //   PropTypes.element,
-  // ]),
+  steps: StepUnion[];
+  style?: ViewStyleProps;
+  submitButtonStyle?: ViewStyleProps;
+  submitButtonContent?: string;
   userAvatar?: string;
-  userBubbleStyle?: {};
-  userBubbleColor?: {};
+  userBubbleStyle?: ViewStyleProps;
+  userBubbleColor?: string;
   userDelay?: number;
   userFontColor?: string;
-  scrollViewProps?: {};
+  scrollViewProps?: ViewStyleProps;
 }
 
 interface State {
-  renderedSteps: string[];
-  previousSteps: string[];
-  currentStep: {};
-  previousStep: {};
-  steps: {};
+  renderedSteps: RunTimeStep[];
+  previousSteps: RunTimeStep[];
+  currentStep: Step;
+  previousStep: Step;
+  steps: StepsDictionary;
   editable: boolean;
   inputValue: string;
   inputInvalid: boolean;
@@ -116,11 +131,11 @@ class ChatBot extends Component<Props, State> {
   public static defaultProps: Partial<Props> = defaultProps;
 
   public readonly state = {
-    renderedSteps: [],
-    previousSteps: [],
-    currentStep: {},
-    previousStep: {},
-    steps: {},
+    renderedSteps: [] as RunTimeStep[],
+    previousSteps: [] as RunTimeStep[],
+    currentStep: {} as RunTimeStep,
+    previousStep: {} as Step,
+    steps: {} as StepsDictionary,
     editable: false,
     inputValue: '',
     inputInvalid: false,
@@ -161,7 +176,7 @@ class ChatBot extends Component<Props, State> {
       optionBubbleColor,
       optionFontColor,
     } = this.props;
-    const steps = {};
+    const steps: StepsDictionary = {};
 
     const defaultBotSettings = {
       delay: botDelay,
@@ -183,7 +198,7 @@ class ChatBot extends Component<Props, State> {
     };
 
     for (let i = 0, len = this.props.steps.length; i < len; i += 1) {
-      const step = this.props.steps[i];
+      const step = this.props.steps[i] as Step;
       let settings = {};
 
       if (step.user) {
@@ -199,7 +214,7 @@ class ChatBot extends Component<Props, State> {
 
     schema.checkInvalidIds(steps);
 
-    const firstStep = this.props.steps[0];
+    const firstStep = this.props.steps[0] as Step;
 
     if (firstStep.message) {
       const { message } = firstStep;
@@ -257,7 +272,7 @@ class ChatBot extends Component<Props, State> {
     }
   };
 
-  getStepMessage = message => {
+  getStepMessage = (message: string | Message) => {
     const { previousSteps } = this.state;
     const lastStepIndex =
       previousSteps.length > 0 ? previousSteps.length - 1 : 0;
@@ -268,7 +283,7 @@ class ChatBot extends Component<Props, State> {
       : message;
   };
 
-  getTriggeredStep = (trigger, value) => {
+  getTriggeredStep = (trigger: ID | Trigger, value?: string | number) => {
     const steps = this.generateRenderedStepsById();
     return typeof trigger === 'function' ? trigger({ value, steps }) : trigger;
   };
@@ -282,7 +297,7 @@ class ChatBot extends Component<Props, State> {
   // };
 
   setScrollViewScrollToEnd = () => {
-    this.scrollView.current.scrollToEnd();
+    this.scrollView.current!.scrollToEnd();
   };
 
   handleEnd = () => {
@@ -297,7 +312,7 @@ class ChatBot extends Component<Props, State> {
 
     for (let i = 0, len = previousSteps.length; i < len; i += 1) {
       const { id, message, value, metadata } = previousSteps[i];
-      steps[id] = { id, message, value, metadata };
+      steps[id as number] = { id, message, value, metadata };
     }
 
     const values = previousSteps
@@ -309,7 +324,7 @@ class ChatBot extends Component<Props, State> {
     }
   };
 
-  triggerNextStep = data => {
+  triggerNextStep = (data: Option) => {
     const {
       renderedSteps,
       previousSteps,
@@ -331,7 +346,7 @@ class ChatBot extends Component<Props, State> {
     } else if (currentStep.options && data) {
       const option = currentStep.options.filter(o => o.value === data.value)[0];
       const trigger = this.getTriggeredStep(option.trigger, currentStep.value);
-      delete currentStep.options;
+      delete (currentStep as Partial<RunTimeStep>).options;
 
       currentStep = Object.assign(
         {},
@@ -376,7 +391,7 @@ class ChatBot extends Component<Props, State> {
 
         if (nextStep.options) {
           for (let i = 0, len = nextStep.options.length; i < len; i += 1) {
-            nextStep.options[i].trigger = updateStep.trigger;
+            (nextStep.options[i] as any).trigger = updateStep.trigger;
           }
         } else {
           nextStep.trigger = updateStep.trigger;
@@ -390,7 +405,7 @@ class ChatBot extends Component<Props, State> {
 
       if (nextStep.user) {
         this.setState({ editable: true });
-        this.inputRef.current.focus();
+        this.inputRef.current!.focus();
       } else {
         renderedSteps.push(nextStep);
         previousSteps.push(nextStep);
@@ -409,7 +424,7 @@ class ChatBot extends Component<Props, State> {
 
   generateRenderedStepsById = () => {
     const { previousSteps } = this.state;
-    const steps = {};
+    const steps: StepsDictionaryPartial = {};
 
     for (let i = 0, len = previousSteps.length; i < len; i += 1) {
       const { id, message, value, metadata } = previousSteps[i];
@@ -419,7 +434,7 @@ class ChatBot extends Component<Props, State> {
     return steps;
   };
 
-  isLastPosition = step => {
+  isLastPosition = (step: RunTimeStep) => {
     const { renderedSteps } = this.state;
     const { length } = renderedSteps;
     const stepIndex = renderedSteps.map(s => s.key).indexOf(step.key);
@@ -439,7 +454,7 @@ class ChatBot extends Component<Props, State> {
     return isLast;
   };
 
-  isFirstPosition = step => {
+  isFirstPosition = (step: RunTimeStep) => {
     const { renderedSteps } = this.state;
     const stepIndex = renderedSteps.map(s => s.key).indexOf(step.key);
 
@@ -458,7 +473,9 @@ class ChatBot extends Component<Props, State> {
     return isFirst;
   };
 
-  handleKeyPress = event => {
+  handleKeyPress = (
+    event: NativeSyntheticEvent<TextInputKeyPressEventData>
+  ) => {
     if (event.nativeEvent.key === 'Enter') {
       this.onButtonPress();
     }
@@ -466,12 +483,12 @@ class ChatBot extends Component<Props, State> {
 
   checkInvalidInput = () => {
     const { currentStep, inputValue } = this.state;
-    const result = currentStep.validator(inputValue);
+    const result = currentStep.validator && currentStep.validator(inputValue);
     const value = inputValue;
 
     if (typeof result !== 'boolean' || !result) {
       this.setState({
-        inputValue: result.toString(),
+        inputValue: result!.toString(),
         inputInvalid: true,
         editable: false,
       });
@@ -482,7 +499,7 @@ class ChatBot extends Component<Props, State> {
           inputInvalid: false,
           editable: true,
         });
-        this.inputRef.current.focus();
+        this.inputRef.current!.focus();
       }, 2000);
 
       return true;
@@ -491,7 +508,7 @@ class ChatBot extends Component<Props, State> {
     return false;
   };
 
-  renderStep = (step, index: number) => {
+  renderStep = (step: Step, index: number) => {
     const { renderedSteps, previousSteps } = this.state;
     const {
       avatarStyle,
@@ -506,7 +523,7 @@ class ChatBot extends Component<Props, State> {
       hideUserAvatar,
     } = this.props;
     const { options, component, asMessage } = step;
-    const steps = {};
+    const steps = {} as StepsDictionaryPartial;
     const stepIndex = renderedSteps.map(s => s.id).indexOf(step.id);
     const previousStep = stepIndex > 0 ? renderedSteps[index - 1] : {};
 
@@ -551,7 +568,7 @@ class ChatBot extends Component<Props, State> {
         key={index}
         step={step}
         steps={steps}
-        previousValue={previousStep.value}
+        previousValue={(previousStep as any).value}
         triggerNextStep={this.triggerNextStep}
         avatarStyle={avatarStyle}
         avatarWrapperStyle={avatarWrapperStyle}
@@ -634,7 +651,6 @@ class ChatBot extends Component<Props, State> {
             color={botBubbleColor}
           >
             <TextInput
-              type="textarea"
               style={textInputStyle}
               placeholder={placeholder}
               ref={this.inputRef}
@@ -642,9 +658,10 @@ class ChatBot extends Component<Props, State> {
               onChangeText={text => this.setState({ inputValue: text })}
               value={inputValue}
               underlineColorAndroid="transparent"
-              invalid={inputInvalid}
               editable={editable}
               {...inputAttributesOverride}
+              // invalid={inputInvalid}
+              // type="textarea"
             />
             <Button
               style={submitButtonStyle}

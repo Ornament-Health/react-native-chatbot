@@ -7,7 +7,7 @@ const possibilities = {
   special: "~!@#$%^&()_+-={}[];',",
 };
 
-export const randomId = (len: number, pattern: string) => {
+export const randomId = (len: number, pattern?: string) => {
   if (!len) len = 30;
   if (!pattern) pattern = 'aA0';
 

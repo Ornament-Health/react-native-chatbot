@@ -9,7 +9,7 @@
   "scripts": {
     "start": "start-storybook -p 9001 -c ./.storybook --ci",
     "story": "build-storybook -o ./docs",
-    "build": "tsc",
+    "build": "tsc --build tsconfig.build.json",
     "defs": "tsc --declaration --outDir . --emitDeclarationOnly",
     "lint-es": "eslint --fix --ext .js,.jsx,.ts,.tsx src/",
     "lint-ts": "./node_modules/.bin/tsc --noEmit --skipLibCheck",

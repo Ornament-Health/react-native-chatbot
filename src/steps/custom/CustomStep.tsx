@@ -1,12 +1,12 @@
-import React, { cloneElement, Component } from 'react';
+import React, { cloneElement, Component, ComponentProps } from 'react';
 import Loading from '../common/Loading';
 import CustomStepContainer from './CustomStepContainer';
 
 interface Props {
-  delay: number;
+  delay?: number;
   step: {};
   steps: {};
-  style: {};
+  style: ComponentProps<typeof CustomStepContainer>['style'];
   previousStep: {};
   triggerNextStep: Function;
 }

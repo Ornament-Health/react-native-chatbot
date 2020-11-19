@@ -9,9 +9,10 @@ import Footer from './Footer';
 import InputView from './InputView';
 import Bubbles from './steps/common/Bubbles';
 import Loading from './steps/common/Loading';
+import { StepUnion } from 'schemas/schema';
 // import Circle from './steps/common/Circle'; // import SVG
 
-const steps = [
+const steps: StepUnion[] = [
   {
     id: '1',
     message: 'What number I am thinking?',
