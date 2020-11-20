@@ -1,8 +1,7 @@
 {
-  "name": "@ornament/react-native-chatbot",
+  "name": "@ornament-health/react-native-chatbot",
   "version": "0.0.1",
   "description": "React Native Chatbot TS",
-  "private": true,
   "sideEffects": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
